@@ -18,6 +18,9 @@ spark = SparkSession.builder.master('local[1]')\
 '''
 Functions to run the checks
 '''
+
+indexes = lambda data_list, element: [index for index, string in enumerate(data_list) if element in string]
+
 def getFileList(path):
 	'''
 	Print the files from the folder in a string format
@@ -99,14 +102,17 @@ def parse(line):
 	list -- the full extracted data
 	'''
 	fields = line.split('-')
+	mid_index = indexes(fields, 'mid=')[0] if len(indexes(fields, 'mid=')) != 0 else 0
+	conv_index = indexes(fields, 'CONVENTION')[0] if len(indexes(fields, 'CONVENTION')) !=0 else 0
+
 	processID = re.sub('\(|\)','',str(fields[3])) if len(fields[3]) > 0 else None
-	if (len(fields[5]) > 0 and ('mid=' in fields[5])):
-		mid,tref,tid,oid,customerIpAddr,amount,captureMode = splitInfos(fields[5])
+	if (len(fields[mid_index]) > 0 and ('mid=' in fields[mid_index])):
+		mid,tref,tid,oid,customerIpAddr,amount,captureMode = splitInfos(fields[mid_index])
 	else :
 		mid,tref,tid,oid,customerIpAddr,amount,captureMode = None,None,None,None,None,None,None
 
-	if (len(fields) >= 7 and ('CONVENTION' in fields[6])):
-		b_alias,b_contract,m_alias,r_code,r_label,r_detailed,p_mean = splitInfos(fields[6])
+	if (len(fields) >= (conv_index+1) and ('CONVENTION' in fields[conv_index])):
+		b_alias,b_contract,m_alias,r_code,r_label,r_detailed,p_mean = splitInfos(fields[conv_index])
 	else
 		b_alias,b_contract,m_alias,r_code,r_label,r_detailed,p_mean = None,None,None,None,None,None,None
 	
