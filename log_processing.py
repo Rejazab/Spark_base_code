@@ -54,13 +54,13 @@ def splitInfos(line):
 		tmp_dic[key] = value
 
 	mid = tmp_dic['mid']
-	tref = tmp_dic['tref']
-	tid = tmp_dic['tid']
-	oid = tmp_dic['oid']
+	ref = tmp_dic['ref']
+	idp = tmp_dic['idp']
+	compInfoId = tmp_dic['compInfoId']
 	ipAddr = tmp_dic['ipAddr']
 	amount = tmp_dic['amount']
-	captureMode = tmp_dic['captureMode']
-	return mid,tref,tid,oid,ipAddr,amount,captureMode
+	cap = tmp_dic['cap']
+	return mid,ref,idp,compInfoId,ipAddr,amount,cap
 
 def splitConv(line):
 	'''
@@ -107,16 +107,16 @@ def parse(line):
 
 	processID = re.sub('\(|\)','',str(fields[3])) if len(fields[3]) > 0 else None
 	if (len(fields[mid_index]) > 0 and ('mid=' in fields[mid_index])):
-		mid,tref,tid,oid,ipAddr,amount,captureMode = splitInfos(fields[mid_index])
+		mid,ref,idp,compInfoId,ipAddr,amount,cap = splitInfos(fields[mid_index])
 	else :
-		mid,tref,tid,oid,ipAddr,amount,captureMode = None,None,None,None,None,None,None
+		mid,ref,idp,compInfoId,ipAddr,amount,cap = None,None,None,None,None,None,None
 
 	if (len(fields) >= (conv_index+1) and ('CONVENTION' in fields[conv_index])):
 		b_alias,b_contract,m_alias,r_code,r_label,r_detailed,p_mean = splitInfos(fields[conv_index])
 	else
 		b_alias,b_contract,m_alias,r_code,r_label,r_detailed,p_mean = None,None,None,None,None,None,None
 	
-	return processID,mid,tref,tid,oid,ipAddr,amount,captureMode,b_alias,b_contract,m_alias,r_code,r_label,r_detailed,p_mean
+	return processID,mid,ref,idp,compInfoId,ipAddr,amount,cap,b_alias,b_contract,m_alias,r_code,r_label,r_detailed,p_mean
 
 '''
 Create and manage RDD
@@ -132,12 +132,12 @@ Create and manage DF
 columns = StructType([\
 	StructField('processID', StringType(),True),\
 	StructField('mid', StringType(),True),\
-	StructField('tref', StringType(),True),\
-	StructField('tid', StringType(),True),\
-	StructField('oid', StringType(),True),\
+	StructField('ref', StringType(),True),\
+	StructField('idp', StringType(),True),\
+	StructField('compInfoId', StringType(),True),\
 	StructField('ipAddr', StringType(),True),\
 	StructField('amount', StringType(),True),\
-	StructField('captureMode', StringType(),True),\
+	StructField('cap', StringType(),True),\
 	StructField('b_alias', StringType(),True),\
 	StructField('b_contract', StringType(),True),\
 	StructField('m_alias', StringType(),True),\
@@ -154,12 +154,12 @@ df_mid_conv = df_mid_conv_init.alias('mid').join(df_mid_conv_init.alias('conv'),
 										.select(
 											col('mid.processID'),\
 											col('mid.mid'),\
-											col('mid.tref'),\
-											col('mid.tid'),\
-											col('mid.oid'),\
+											col('mid.ref'),\
+											col('mid.idp'),\
+											col('mid.compInfoId'),\
 											col('mid.ipAddr'),\
 											col('mid.amount'),\
-											col('mid.captureMode'),\
+											col('mid.cap'),\
 											col('conv.b_alias'),\
 											col('conv.b_contract'),\
 											col('conv.m_alias'),\
@@ -168,7 +168,7 @@ df_mid_conv = df_mid_conv_init.alias('mid').join(df_mid_conv_init.alias('conv'),
 											col('conv.r_detailed'),\
 											col('conv.p_mean')\
 										)\
-										.filter('r_code is not NULL and tref is not NULL')
+										.filter('r_code is not NULL and ref is not NULL')
 
 print("Number of rows: %s"%(df_mid_conv.count()))
 df_mid_conv.show(5)
@@ -195,3 +195,4 @@ Storage
 '''
 spark.sql(request).write.mode('overwrite').options(header='True', delimiter=';')\
 	.csv('results')
+
