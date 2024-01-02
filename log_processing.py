@@ -103,7 +103,7 @@ def parse(line):
 	'''
 	fields = line.split('-')
 	mid_index = indexes(fields, 'mid=')[0] if len(indexes(fields, 'mid=')) != 0 else 0
-	conv_index = indexes(fields, 'CONVENTION')[0] if len(indexes(fields, 'CONVENTION')) !=0 else 0
+	conv_index = indexes(fields, 'conv')[0] if len(indexes(fields, 'conv')) !=0 else 0
 
 	processID = re.sub('\(|\)','',str(fields[3])) if len(fields[3]) > 0 else None
 	if (len(fields[mid_index]) > 0 and ('mid=' in fields[mid_index])):
@@ -111,7 +111,7 @@ def parse(line):
 	else :
 		mid,ref,idp,compInfoId,ipAddr,amount,cap = None,None,None,None,None,None,None
 
-	if (len(fields) >= (conv_index+1) and ('CONVENTION' in fields[conv_index])):
+	if (len(fields) >= (conv_index+1) and ('conv' in fields[conv_index])):
 		b_alias,b_contract,m_alias,r_code,r_label,r_detailed,p_mean = splitInfos(fields[conv_index])
 	else
 		b_alias,b_contract,m_alias,r_code,r_label,r_detailed,p_mean = None,None,None,None,None,None,None
