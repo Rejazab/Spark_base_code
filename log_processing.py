@@ -12,8 +12,8 @@ from pyspark.sql.functions import *
 from pyspark.sql.types import StructType, StructField, StringType
 
 spark = SparkSession.builder.master('local[1]')\
-							.appName('Extract_log_file')\
-							.getOrCreate()
+						.appName('Extract_log_file')\
+						.getOrCreate()
 
 '''
 Functions to run the checks
@@ -57,10 +57,10 @@ def splitInfos(line):
 	tref = tmp_dic['tref']
 	tid = tmp_dic['tid']
 	oid = tmp_dic['oid']
-	customerIpAddr = tmp_dic['customerIpAddr']
+	ipAddr = tmp_dic['ipAddr']
 	amount = tmp_dic['amount']
 	captureMode = tmp_dic['captureMode']
-	return mid,tref,tid,oid,customerIpAddr,amount,captureMode
+	return mid,tref,tid,oid,ipAddr,amount,captureMode
 
 def splitConv(line):
 	'''
@@ -107,16 +107,16 @@ def parse(line):
 
 	processID = re.sub('\(|\)','',str(fields[3])) if len(fields[3]) > 0 else None
 	if (len(fields[mid_index]) > 0 and ('mid=' in fields[mid_index])):
-		mid,tref,tid,oid,customerIpAddr,amount,captureMode = splitInfos(fields[mid_index])
+		mid,tref,tid,oid,ipAddr,amount,captureMode = splitInfos(fields[mid_index])
 	else :
-		mid,tref,tid,oid,customerIpAddr,amount,captureMode = None,None,None,None,None,None,None
+		mid,tref,tid,oid,ipAddr,amount,captureMode = None,None,None,None,None,None,None
 
 	if (len(fields) >= (conv_index+1) and ('CONVENTION' in fields[conv_index])):
 		b_alias,b_contract,m_alias,r_code,r_label,r_detailed,p_mean = splitInfos(fields[conv_index])
 	else
 		b_alias,b_contract,m_alias,r_code,r_label,r_detailed,p_mean = None,None,None,None,None,None,None
 	
-	return processID,mid,tref,tid,oid,customerIpAddr,amount,captureMode,b_alias,b_contract,m_alias,r_code,r_label,r_detailed,p_mean
+	return processID,mid,tref,tid,oid,ipAddr,amount,captureMode,b_alias,b_contract,m_alias,r_code,r_label,r_detailed,p_mean
 
 '''
 Create and manage RDD
@@ -135,7 +135,7 @@ columns = StructType([\
 	StructField('tref', StringType(),True),\
 	StructField('tid', StringType(),True),\
 	StructField('oid', StringType(),True),\
-	StructField('customerIpAddr', StringType(),True),\
+	StructField('ipAddr', StringType(),True),\
 	StructField('amount', StringType(),True),\
 	StructField('captureMode', StringType(),True),\
 	StructField('b_alias', StringType(),True),\
@@ -149,26 +149,26 @@ columns = StructType([\
 
 df_mid_conv_init = spark.createDataFrame(data=rdd_all, schema=columns)
 df_mid_conv = df_mid_conv_init.alias('mid').join(df_mid_conv_init.alias('conv'),\
-												col('mid.processID') == col('conv.processID'), 'inner'
-											)\
-											.select(
-												col('mid.processID'),\
-												col('mid.mid'),\
-												col('mid.tref'),\
-												col('mid.tid'),\
-												col('mid.oid'),\
-												col('mid.customerIpAddr'),\
-												col('mid.amount'),\
-												col('mid.captureMode'),\
-												col('conv.b_alias'),\
-												col('conv.b_contract'),\
-												col('conv.m_alias'),\
-												col('conv.r_code'),\
-												col('conv.r_label'),\
-												col('conv.r_detailed'),\
-												col('conv.p_mean')\
-											)\
-											.filter('r_code is not NULL and tref is not NULL')
+										col('mid.processID') == col('conv.processID'), 'inner'
+										)\
+										.select(
+											col('mid.processID'),\
+											col('mid.mid'),\
+											col('mid.tref'),\
+											col('mid.tid'),\
+											col('mid.oid'),\
+											col('mid.ipAddr'),\
+											col('mid.amount'),\
+											col('mid.captureMode'),\
+											col('conv.b_alias'),\
+											col('conv.b_contract'),\
+											col('conv.m_alias'),\
+											col('conv.r_code'),\
+											col('conv.r_label'),\
+											col('conv.r_detailed'),\
+											col('conv.p_mean')\
+										)\
+										.filter('r_code is not NULL and tref is not NULL')
 
 print("Number of rows: %s"%(df_mid_conv.count()))
 df_mid_conv.show(5)
@@ -183,9 +183,9 @@ Process Data
 df_mid_conv.createOrReplaceView("Logs")
 
 request = """
-			select * 
-			from Logs
-		  """
+		select * 
+		from Logs
+	  """
 
 spark.sql(request)\
 	.show(truncate=False)
